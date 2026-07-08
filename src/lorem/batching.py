@@ -150,23 +150,21 @@ def to_sample(
     """Build a sample with decoupled short-range and Ewald neighbor lists.
 
     ``cutoff`` sets the short-range/message-passing neighbor list (built via
-    marathon/vesin, no k-grid). The Ewald real-space list is built independently
-    from ``num_k`` (fixed k-grid) or, if that is not given, from ``cutoff_ewald``
-    (falling back to ``cutoff``). When ``num_k`` is set the Ewald cutoff is
-    derived by jax-pme and decoupled from the short-range cutoff.
+    marathon/vesin, no k-grid). ``num_k`` controls the Ewald reciprocal grid for
+    periodic systems, while ``cutoff_ewald`` bounds the Ewald real-space list
+    (falling back to ``cutoff``).
     """
     # Short-range neighbor list at the model cutoff (marathon, no k-grid).
     structure = to_structure(atoms, cutoff, float_dtype=np.float32)
 
-    # Ewald neighbor list: a fixed k-grid (num_k) decouples its cutoff from the
-    # short-range cutoff. num_k only makes sense for periodic systems; for
-    # non-periodic ones fall back to an explicit Ewald cutoff (the long-range
-    # part is an all-pairs sum there anyway).
+    # Ewald neighbor list: a fixed k-grid (num_k) decouples reciprocal-space
+    # resolution from the real-space cutoff. num_k only makes sense for periodic
+    # systems; non-periodic ones use the explicit Ewald cutoff.
     ewald_num_k = num_k if atoms.pbc.any() else None
     ewald_cutoff = cutoff_ewald if cutoff_ewald is not None else cutoff
     ewald_structure = jaxpme_prepare(
         atoms,
-        cutoff=None if ewald_num_k is not None else ewald_cutoff,
+        cutoff=ewald_cutoff,
         num_k=ewald_num_k,
         lr_wavelength=lr_wavelength,
         smearing=smearing,
