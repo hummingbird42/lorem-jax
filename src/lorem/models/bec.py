@@ -240,6 +240,12 @@ class LoremBEC(nn.Module):
             # -- residual prediction --
             energy += masked(MLP(features=[d, d, 1]), nodes_scalar, atom_mask)[..., 0]
 
+            apt += PerParticleTensorPredictor(
+                features=self.num_features,
+                name="apt_lr_head",
+            )(spherical_updates)
+            apt *= atom_mask[..., None, None]
+
         return energy, apt
 
     def atoms_to_batch(self, atoms):
@@ -342,15 +348,11 @@ class PerParticleTensorPredictor(nn.Module):
 
         x = e3x.nn.activations.silu(x)
 
-        x = e3x.nn.Dense(features=self.features)(
-            x
-        )  # -> [...,1 or 2,(l+1)**2,sp_features]
+        x = e3x.nn.Dense(features=self.features)(spherical_features)  # -> [...,1 or 2,(l+1)**2,sp_features]
 
         x = e3x.nn.activations.silu(x)
 
-        x = e3x.nn.Dense(features=self.features)(
-            x
-        )  # -> [...,1 or 2,(l+1)**2,sp_features]
+        x = e3x.nn.Dense(features=self.features)(spherical_features)  # -> [...,1 or 2,(l+1)**2,sp_features]
 
         # coupling and weighting
         x = e3x.nn.TensorDense(
