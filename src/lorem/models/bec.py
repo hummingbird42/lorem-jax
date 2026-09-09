@@ -245,7 +245,7 @@ class LoremBEC(nn.Module):
                 name="apt_lr_head",
             )(spherical_updates)
             apt *= atom_mask[..., None, None]
-            
+
         return energy, apt
 
     def atoms_to_batch(self, atoms):
