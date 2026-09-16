@@ -17,6 +17,7 @@ dependencies = [
     "grain<0.2.17",
     "opsis",
     "optax",
+    "wandb",
 ]
 dynamic = ["version"]
 license = "BSD-3-Clause"
